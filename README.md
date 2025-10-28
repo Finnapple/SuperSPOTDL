@@ -37,7 +37,6 @@ pip install -r requirements.txt
 ```bash
 chmod +x setup.sh   # Give execute permission (for Linux)
 ./setup.sh          # Run the script (for macOS)
-for windows, just double click the setup.bat
 ```
 
 ## For Windows:
