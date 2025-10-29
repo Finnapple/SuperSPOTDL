@@ -1,6 +1,6 @@
 ## SuperSpotdl
 
-A Python-based Spotify downloader that fetches **high-quality audio** (MP3 or FLAC) from Spotify tracks and albums.  
+A Python-based Spotify Music Downloader that fetches **high-quality audio** (MP3 or FLAC) from Spotify tracks and albums.  
 It uses the Spotify API for track information, YouTube for audio sources, and yt-dlp for downloading.  
 Supports **metadata embedding** (ID3 / FLAC tags), including album art.  
 Perfect for building an **offline, high-quality music collection**.
