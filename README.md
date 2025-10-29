@@ -1,4 +1,4 @@
-## spotdl
+## Super Spotdl
 
 A Python-based Spotify downloader that fetches **high-quality audio** (MP3 or FLAC) from Spotify tracks and albums.  
 It uses the Spotify API for track information, YouTube for audio sources, and yt-dlp for downloading.  
