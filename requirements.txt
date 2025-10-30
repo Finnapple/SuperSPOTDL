@@ -1,4 +1,0 @@
-spotipy
-yt-dlp
-requests
-mutagen
