@@ -71,9 +71,10 @@ class AdvancedSpotifyDownloader:
         print(r"     |_|                     ")
         print("     Developed by: @Finnapple")
         print()
-        print("[*] Spotify Music Downloader")
-        print("[*] Download your song in 320kbps using spotdl")
-        print("[*] Paste Spotify URLs (track or album). Type 'exit' to quit.")
+        print("[*] Spotify Music Downloader - MP3 320kbps Edition")
+        print("[*] Download your song in MP3 320kbps format using spotdl")
+        print("[*] Supports: Tracks, Albums, and Playlists")
+        print("[*] Paste Spotify URLs. Type 'exit' to quit.")
         print("[*] Type 'clear' to clear the screen.")
         print(f"[*] Downloading to: {self.output_dir}")
         print("-" * 50)
@@ -100,40 +101,54 @@ class AdvancedSpotifyDownloader:
             pass
         return None
 
-    def apply_metadata_to_file(self, file_path: Path, meta: Dict, cover_bytes: Optional[bytes] = None):
-        """Apply ID3 tags to a single file using Spotify metadata."""
+    def apply_metadata_to_mp3(self, file_path: Path, meta: Dict, cover_bytes: Optional[bytes] = None):
+        """Apply metadata to MP3 file using mutagen."""
         try:
             audio = MP3(file_path, ID3=ID3)
+            
+            # Ensure ID3 tag exists
             try:
                 audio.add_tags()
             except error:
                 pass
-
+            
+            # Set MP3 metadata
             if 'title' in meta:
-                audio.tags['TIT2'] = TIT2(encoding=3, text=meta['title'])
+                audio.tags.add(TIT2(encoding=3, text=meta['title']))
             if 'artists' in meta:
-                audio.tags['TPE1'] = TPE1(encoding=3, text=meta['artists'])
+                audio.tags.add(TPE1(encoding=3, text=meta['artists']))
             if 'album' in meta:
-                audio.tags['TALB'] = TALB(encoding=3, text=meta['album'])
+                audio.tags.add(TALB(encoding=3, text=meta['album']))
             if 'track_number' in meta:
-                audio.tags['TRCK'] = TRCK(encoding=3, text=str(meta['track_number']))
+                audio.tags.add(TRCK(encoding=3, text=str(meta['track_number'])))
             if 'release_date' in meta and meta['release_date']:
                 year = str(meta['release_date']).split('-')[0]
                 if year:
-                    audio.tags['TYER'] = TYER(encoding=3, text=year)
+                    audio.tags.add(TYER(encoding=3, text=year))
+            
+            # Add album art
             if cover_bytes:
-                audio.tags['APIC'] = APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=cover_bytes)
+                audio.tags.add(
+                    APIC(
+                        encoding=3,  # UTF-8
+                        mime='image/jpeg',
+                        type=3,  # Front cover
+                        desc='Cover',
+                        data=cover_bytes
+                    )
+                )
+            
             audio.save()
-            print(f"[*] Metadata applied: {file_path.name}")
+            print(f"[*] MP3 metadata applied: {file_path.name}")
         except Exception as e:
-            print(f"[*] Error applying metadata to {file_path.name}: {e}")
+            print(f"[*] Error applying MP3 metadata to {file_path.name}: {e}")
 
     def sync_track_metadata(self, track_info: Dict, directory: Path):
         """Find downloaded MP3(s) for a single track and apply Spotify metadata."""
         cover_bytes = self.download_image(track_info.get('cover_url'))
         candidates = list(directory.glob("*.mp3"))
         if not candidates:
-            print("[*] No mp3 files found to tag.")
+            print("[*] No MP3 files found to tag.")
             return
 
         target_norm = self.normalize(track_info['title'])
@@ -182,7 +197,7 @@ class AdvancedSpotifyDownloader:
             except Exception as e:
                 print(f"[*] Could not rename file: {e}")
 
-            self.apply_metadata_to_file(best, meta, cover_bytes)
+            self.apply_metadata_to_mp3(best, meta, cover_bytes)
         else:
             print("[*] Could not confidently match a downloaded file to the Spotify track.")
 
@@ -191,7 +206,7 @@ class AdvancedSpotifyDownloader:
         cover_bytes = self.download_image(album_info.get('cover_url'))
         files = list(directory.glob("*.mp3"))
         if not files:
-            print("[*] No mp3 files found in album directory.")
+            print("[*] No MP3 files found in album directory.")
             return
 
         # Precompute normalized filenames and durations
@@ -250,7 +265,7 @@ class AdvancedSpotifyDownloader:
                         best['path'] = candidate_new
                 except Exception as e:
                     print(f"[*] Could not rename file {best['path'].name}: {e}")
-                self.apply_metadata_to_file(best['path'], meta, cover_bytes)
+                self.apply_metadata_to_mp3(best['path'], meta, cover_bytes)
                 best['used'] = True
             else:
                 print(f"[*] No good match for track: {track['title']}")
@@ -317,6 +332,51 @@ class AdvancedSpotifyDownloader:
         except Exception as e:
             print(f"[*] Error getting album info: {e}")
             return None
+
+    def get_playlist_info(self, playlist_url: str) -> Optional[Dict]:
+        """Get playlist information from Spotify"""
+        try:
+            playlist_id = playlist_url.split('/')[-1].split('?')[0]
+            playlist = self.sp.playlist(playlist_id)
+            
+            # Get all tracks from the playlist
+            tracks = []
+            results = self.sp.playlist_tracks(playlist_id)
+            tracks.extend(results['items'])
+            
+            while results['next']:
+                results = self.sp.next(results)
+                tracks.extend(results['items'])
+            
+            playlist_info = {
+                'id': playlist['id'],
+                'name': playlist['name'],
+                'description': playlist.get('description', ''),
+                'owner': playlist['owner']['display_name'],
+                'total_tracks': playlist['tracks']['total'],
+                'cover_url': playlist['images'][0]['url'] if playlist['images'] else None,
+                'tracks': []
+            }
+            
+            for item in tracks:
+                if item['track'] and item['track']['type'] == 'track':
+                    track = item['track']
+                    track_artists = ", ".join([artist['name'] for artist in track['artists']])
+                    playlist_info['tracks'].append({
+                        'id': track['id'],
+                        'title': track['name'],
+                        'artists': track_artists,
+                        'album': track['album']['name'],
+                        'release_date': track['album']['release_date'],
+                        'track_number': track['track_number'],
+                        'duration_ms': track['duration_ms'],
+                        'cover_url': track['album']['images'][0]['url'] if track['album']['images'] else None
+                    })
+            
+            return playlist_info
+        except Exception as e:
+            print(f"[*] Error getting playlist info: {e}")
+            return None
     
     def download_with_spotdl(self, url: str, output_path: Path, timeout: int = 900) -> bool:
         """Download audio using spotdl while streaming stdout/stderr so progress is visible."""
@@ -325,8 +385,9 @@ class AdvancedSpotifyDownloader:
             os.chdir(output_path)
 
             # Use Popen to stream output so user can see progress
+            # Fixed bitrate parameter - use '320k' instead of '320'
             proc = subprocess.Popen(
-                ["spotdl", url, "--bitrate", "320k"],
+                ["spotdl", url, "--format", "mp3", "--bitrate", "320k", "--audio", "youtube-music"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -450,11 +511,11 @@ class AdvancedSpotifyDownloader:
                 pass
             # try reading ID3 tags if available
             try:
-                tags = ID3(f)
-                if 'TIT2' in tags:
-                    tag_title = self.normalize(str(tags['TIT2'].text[0]))
-                if 'TPE1' in tags:
-                    tag_artist = self.normalize(str(tags['TPE1'].text[0]))
+                if audio.tags:
+                    if 'TIT2' in audio.tags:
+                        tag_title = self.normalize(str(audio.tags['TIT2']))
+                    if 'TPE1' in audio.tags:
+                        tag_artist = self.normalize(str(audio.tags['TPE1']))
             except Exception:
                 pass
             file_data.append({'path': f, 'norm': norm, 'length': length, 'tag_title': tag_title, 'tag_artist': tag_artist})
@@ -540,7 +601,45 @@ class AdvancedSpotifyDownloader:
         print("[*] Album download and tagging completed!")
         return True
 
-    # NEW helper: retry a single album track until a confident file is present
+    def download_playlist(self, playlist_url: str):
+        """Download an entire playlist using spotdl."""
+        print(f"[*] Processing playlist: {playlist_url}")
+        
+        # Get playlist info from Spotify
+        playlist_info = self.get_playlist_info(playlist_url)
+        if not playlist_info:
+            print("[*] Failed to get playlist information")
+            return False
+        
+        print(f"[*] Found playlist: {playlist_info['name']}")
+        print(f"[*] Owner: {playlist_info['owner']}")
+        print(f"[*] Tracks: {playlist_info['total_tracks']}")
+        if playlist_info['description']:
+            print(f"[*] Description: {playlist_info['description']}")
+        
+        # Create playlist directory
+        playlist_dir = self.output_dir / self.sanitize_filename(f"Playlist - {playlist_info['name']}")
+        playlist_dir.mkdir(exist_ok=True)
+        
+        print(f"[*] Downloading to: {playlist_dir}")
+        
+        # Download entire playlist
+        print("[*] Starting playlist download (stream visible)...")
+        success = self.download_with_spotdl(playlist_url, playlist_dir)
+        
+        # Apply metadata to all downloaded tracks
+        if playlist_dir.exists():
+            print("[*] Applying metadata to playlist tracks...")
+            for track in playlist_info['tracks']:
+                self.sync_track_metadata(track, playlist_dir)
+        
+        if success:
+            print(f"[+] Playlist download completed! Downloaded {playlist_info['total_tracks']} tracks.")
+        else:
+            print(f"[!] Playlist download completed with some errors. Check the files in: {playlist_dir}")
+        
+        return True
+
     def retry_track_until_downloaded(self, track: Dict, album_info: Dict, album_dir: Path, timeout: int = 300):
         """Keep retrying download for one track until a confident match/file exists."""
         expected_name = f"{self.sanitize_filename(track.get('artists') or album_info.get('artists'))} - {self.sanitize_filename(track['title'])}.mp3"
@@ -617,18 +716,20 @@ class AdvancedSpotifyDownloader:
             time.sleep(2)
 
     def process_url(self, url: str):
-        """Process a Spotify URL (track or album)"""
+        """Process a Spotify URL (track, album, or playlist)"""
         if 'track' in url:
             return self.download_track(url)
         elif 'album' in url:
             return self.download_album(url)
+        elif 'playlist' in url:
+            return self.download_playlist(url)
         else:
-            print("[*] Unsupported Spotify URL. Please provide a track or album link.")
+            print("[*] Unsupported Spotify URL. Please provide a track, album, or playlist link.")
             return False
 
 def main():
-    parser = argparse.ArgumentParser(description='Advanced Spotify Downloader')
-    parser.add_argument('url', nargs='?', help='Spotify track or album URL')
+    parser = argparse.ArgumentParser(description='Advanced Spotify Downloader - MP3 320kbps Edition')
+    parser.add_argument('url', nargs='?', help='Spotify track, album, or playlist URL')
     parser.add_argument('--file', '-f', help='Text file containing multiple Spotify URLs')
     
     args = parser.parse_args()
