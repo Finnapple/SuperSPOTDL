@@ -23,6 +23,6 @@ chmod +x setup.sh   # Give execute permission (for Linux)
 
 ## For Windows:
 ```bat
-Run the setup.bat and you're good to go
-Double click spot_flac.bat or spot_mp3.bat
+Run the setup.bat and you're good to go.
+Double click spot_flac.bat or spot_mp3.bat to launch the script.
 ```
