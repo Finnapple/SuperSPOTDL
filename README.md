@@ -1,4 +1,4 @@
-# 🎵 SuperSPOTDL
+# SuperSPOTDL
 
 > **High-quality Spotify music downloader. MP3 or FLAC. No hassle.**
 
@@ -6,19 +6,19 @@ SuperSPOTDL is a Python-based Spotify downloader that grabs **320kbps MP3** or *
 
 ---
 
-## ✨ Features
+## Features
 
-- 🎶 **MP3 & FLAC support** — choose between 320kbps MP3 or lossless FLAC
-- 🔍 **Spotify API integration** — accurate track info, artist, album data
-- 📺 **YouTube Music as audio source** — best available audio matched to your track
-- 🏷️ **Metadata embedding** — ID3 tags (MP3) and FLAC tags automatically written
-- 🖼️ **Album art embedding** — cover art saved directly into the audio file
-- 💿 **Tracks, albums & playlists** — download individual songs or entire collections
-- 🖥️ **Cross-platform** — works on Windows, macOS, and Linux
+- **MP3 & FLAC support** — choose between 320kbps MP3 or lossless FLAC
+- **Spotify API integration** — accurate track info, artist, album data
+- **YouTube Music as audio source** — best available audio matched to your track
+- **Metadata embedding** — ID3 tags (MP3) and FLAC tags automatically written
+- **Album art embedding** — cover art saved directly into the audio file
+- **Tracks, albums & playlists** — download individual songs or entire collections
+- **Cross-platform** — works on Windows, macOS, and Linux
 
 ---
 
-## 🗂️ File Structure
+## File Structure
 
 ```
 SuperSPOTDL/
@@ -33,7 +33,7 @@ SuperSPOTDL/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Requirements
 
@@ -92,7 +92,7 @@ Double-click spot_flac.bat  → for FLAC
 
 ---
 
-## 🎧 MP3 vs FLAC — Which should I use?
+## MP3 vs FLAC — Which should I use?
 
 | | MP3 (320kbps) | FLAC (Lossless) |
 |---|---|---|
@@ -103,7 +103,7 @@ Double-click spot_flac.bat  → for FLAC
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 All dependencies are listed in `requirements.txt`. Key packages include:
 
@@ -114,17 +114,17 @@ All dependencies are listed in `requirements.txt`. Key packages include:
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This tool is intended for **personal use only**. Downloading copyrighted music may violate Spotify's Terms of Service and copyright laws in your country. Use responsibly.
 
 ---
 
-## 👤 Author
+## Author
 
 **Finnapple**
 - GitHub: [@Finnapple](https://github.com/Finnapple)
 
 ---
 
-<p align="center">Made for audiophiles, by an audiophile 🎧</p>
+<p align="center">Made for audiophiles, by an audiophile</p>
